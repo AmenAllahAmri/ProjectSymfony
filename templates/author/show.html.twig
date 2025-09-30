@@ -1,0 +1,17 @@
+{{name | upper}}<br>
+{% set A=4 %}
+{{A}}<br>
+
+{% if 'Fabien' starts with 'F' %}
+    commence par F
+{% endif %}<br>
+
+{% if 'Fabien' ends with 'n' %}
+    finit par n
+{% endif %}<br>
+
+
+<a href="{{path('Afficher')}}">Lien1</a><br>
+<a href="{{url('Afficher')}}">Lien2</a><br>
+
+<img src="{{asset('assets/images/image.png')}}">
