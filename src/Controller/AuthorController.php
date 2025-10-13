@@ -2,7 +2,12 @@
 
 namespace App\Controller;
 
+use App\Entity\Author;
+use App\Form\AuthorType;
+use App\Repository\AuthorRepository;
+use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -16,49 +21,61 @@ final class AuthorController extends AbstractController
         ]);
     }
 
-    #[Route('/authorName/{name}', name: 'showAuthor')]
-    public function showAuthor($name){
-        return $this->render('author/show.html.twig',[
-            'name'=>$name,
-        ]);
-    }
-
-    #[Route('/afficher', name: 'Afficher')]
-    public function Afficher(): Response{
-        return new Response('Hello');
-    }
-
-
-    #[Route('/list', name: 'listAuthors')]
-    public function listAuthors(){
-        $authors = array(
-            array('id' => 1, 'picture' => '/images/Victor-Hugo.jpg','username' => 'Victor Hugo', 'email' =>
-            'victor.hugo@gmail.com ', 'nb_books' => 100),
-            array('id' => 2, 'picture' => '/images/william-shakespeare.jpg','username' => ' William Shakespeare', 'email' =>
-            ' william.shakespeare@gmail.com', 'nb_books' => 200 ),
-            array('id' => 3, 'picture' => '/images/Taha_Hussein.jpg','username' => 'Taha Hussein', 'email' =>
-            'taha.hussein@gmail.com', 'nb_books' => 300),
-            );
-            return $this->render('author/list.html.twig',[
-                'authors'=>$authors
-            ]);
-    }
-
-    #[Route('/author/details/{id}', name: 'author_details')]
-    public function authorDetails($id): Response
+    #[Route('/ShowAllAuthor' , name:'ShowAllAuthor')]
+    public function ShowAllAuthor(AuthorRepository $repo)
     {
-        $authors = [
-            1 => ['id' => 1, 'picture' => '/assets/images/Victor-Hugo.jpg','username' => 'Victor Hugo', 'email' => 'victor.hugo@gmail.com', 'nb_books' => 100],
-            2 => ['id' => 2, 'picture' => '/assets/images/william-shakespeare.jpg','username' => 'William Shakespeare', 'email' => 'william.shakespeare@gmail.com', 'nb_books' => 200],
-            3 => ['id' => 3, 'picture' => '/assets/images/Taha_Hussein.jpg','username' => 'Taha Hussein', 'email' => 'taha.hussein@gmail.com', 'nb_books' => 300],
-        ];
+        $authors = $repo->findAll();
+        return $this->render('author/listAuthor.html.twig', [
+            'list' => $authors
+        ]);
 
+    }
 
-        $author = $authors[$id];
+    #[Route('/addAuthor' , name:'addAuthor')]
+    public function add (Request $request, ManagerRegistry $doctrine): Response{
+        $author = new Author();
+        $form = $this->createForm(AuthorType::class, $author);
+        $form->handleRequest($request);
 
-        return $this->render('author/showAuthor.html.twig', [
-            'author' => $author
+        if($form->isSubmitted() && $form->isValid()){
+            $em = $doctrine->getManager();
+            $em->persist($author);
+            $em->flush();
+            return $this->redirectToRoute('ShowAllAuthor');
+        }
+        return $this->render('author/add.html.twig', [
+            'formA' => $form->createView()
+        ]);
+
+    }
+
+    #[Route('/editAuthor{id}' , name:'editAuthor')]
+    public function edit (Author $author, Request $request, ManagerRegistry $doctrine, $id,AuthorRepository $repo) : Response{
+        $author = $repo->find($id);
+
+        if (!$author) {
+            throw $this->createNotFoundException('Auteur non trouvé.');
+        }
+        $form = $this->createForm(AuthorType::class, $author);
+        $form->handleRequest($request);
+
+        if($form->isSubmitted() && $form->isValid()){
+            $em = $doctrine->getManager();
+            $em->flush();
+            return $this->redirectToRoute('ShowAllAuthor');
+        }
+        return $this->render('author/edit.html.twig', [
+            'formA' => $form->createView()
         ]);
     }
 
+    #[Route('deleteAuthor{id}', name:'deleteAuthor')]
+    public function delete(ManagerRegistry $doctrine, $id, AuthorRepository $repo){
+        $author=$repo->find($id);
+        $em=$doctrine->getManager();
+        $em->remove($author);
+        $em->flush();
+        return $this->redirect('ShowAllAuthor');
+
+    }
 }
