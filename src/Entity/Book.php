@@ -25,9 +25,9 @@ class Book
     #[ORM\Column]
     private ?bool $published = True;
 
-    #[ORM\ManyToOne]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\ManyToOne(inversedBy: 'books')]
     private ?Author $author = null;
+
 
     public function getId(): ?int
     {
@@ -93,4 +93,6 @@ class Book
 
         return $this;
     }
+
+    
 }
